@@ -1,0 +1,55 @@
+import torchvision
+import torchvision.transforms as transforms
+
+import torch
+import torch.nn as nn
+transform=transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5,),(0.5,))])
+train_datasets=torchvision.datasets.MNIST(root='./data',train=True,transform=transform,download=True)
+test_datasets=torchvision.datasets.MNIST(root='./data',train=False,transform=transform,download=True)
+train_loader=torch.utils.data.DataLoader(dataset=train_datasets,shuffle=True,batch_size=64)
+test_loader=torch.utils.data.DataLoader(dataset=test_datasets,shuffle=False,batch_size=64)
+
+#we will name our model as DIGITS
+class DIGITS(nn.Module):
+  def __init__(self):
+    super(DIGITS,self).__init__()
+    self.fc1=nn.Linear(28*28,128)
+    self.relu=nn.ReLU()
+    self.fc2=nn.Linear(128,64)
+    self.fc3=nn.Linear(64,10)
+
+  def forward(self,x):
+    x=x.view(-1,28*28)
+    x=self.fc1(x)
+    x=self.relu(x)
+    x=self.fc2(x)
+    x=self.relu(x)
+    x=self.fc3(x)
+    return x
+
+model=DIGITS()
+criterion=nn.CrossEntropyLoss()
+optimizer=torch.optim.Adam(model.parameters(),lr=0.001)
+
+
+#training loop
+epochs=5
+for epoch in range(epochs):
+  for images,labels in train_loader:
+    outputs=model(images)
+    loss=criterion(outputs,labels)
+    #backward pass
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+  print(f"Epoch ::{epoch+1}/{epochs} , Loss ::{loss.item():.4f}")
+
+correct=0
+total=0
+with torch.no_grad():
+  for images,labels in test_loader:
+    outputs=model(images)
+    _,predicted=torch.max(outputs.data,1)
+    total+=labels.size(0)
+    correct+=(predicted==labels).sum().item()
+print(f"Accuracy : {100*correct/total:.2f}")
