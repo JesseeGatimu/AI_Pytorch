@@ -1,0 +1,31 @@
+import torch
+
+X = torch.tensor([[1.0, 2.0],
+                  [2.0, 3.0],
+                  [3.0, 4.0],
+                  [4.0, 5.0]])
+Y = torch.tensor([[8.0], [13.0], [18.0], [23.0]]) 
+
+#we create our weight. we will create two of them since we have the equation as y=3x+2x+1
+w=torch.randn((2,1),requires_grad=True)
+b=torch.randn(1,requires_grad=True)
+lr=0.01
+epochs=2000
+for epoch in range(epochs):
+  #forward pass
+  Y_pred=X@w+b
+  #we will use mean squared error since we are doing linear regression
+  loss=torch.mean((Y_pred-Y)**2)
+  #we can now do back pass
+  loss.backward()
+  # we can now update our weights
+  with torch.no_grad():
+    w-=lr*w.grad
+    b-=lr*b.grad
+  #we can reset the gradients
+  w.grad.zero_()
+  b.grad.zero_()
+  if epoch%100==0:
+    print(f"Epoch {epoch} ::Loss {loss.item():.4f} ::Weight {w.view(-1).tolist()} ::Bias {b.item():.4f}")
+print(f"\n Trained Model {w[0].item():.2f}, w2 = {w[1].item():.2f}, b = {b.item():.2f}")
+
